@@ -20,10 +20,6 @@ class ImportLegacyTest extends TestCase
 
         $legacy = DB::connection('legacy');
         $legacy->table('users')->insert(['id' => 7, 'name' => 'Snevver', 'email' => 'a@b.c', 'password' => 'hash', 'created_at' => now(), 'updated_at' => now()]);
-        $legacy->table('settings')->insert([
-            ['key' => 'inchecken_ip_whitelist', 'value' => "1.2.3.4\n5.6.7.8", 'created_at' => now(), 'updated_at' => now()],
-            ['key' => 'mail_password', 'value' => 'encrypted-with-old-key', 'created_at' => now(), 'updated_at' => now()],
-        ]);
         $legacy->table('exercises')->insert(['id' => 3, 'user_id' => 7, 'name' => 'Squat', 'created_at' => now(), 'updated_at' => now()]);
         $legacy->table('training_schemes')->insert(['id' => 2, 'user_id' => 7, 'name' => 'Legs', 'created_at' => now(), 'updated_at' => now()]);
         $legacy->table('exercise_training_scheme')->insert(['exercise_id' => 3, 'training_scheme_id' => 2, 'order' => 1]);
@@ -37,7 +33,6 @@ class ImportLegacyTest extends TestCase
         $this->artisan('app:import-legacy')->assertSuccessful();
 
         $this->assertSame(1, DB::table('users')->where('id', 7)->count());
-        $this->assertSame(['inchecken_ip_whitelist'], DB::table('settings')->pluck('key')->all());
         $this->assertSame('Squat', DB::table('exercises')->value('name'));
         $this->assertSame(1, DB::table('exercise_training_scheme')->count());
         $this->assertSame(1, DB::table('gym_logs')->count());
@@ -46,18 +41,18 @@ class ImportLegacyTest extends TestCase
 
     public function test_it_skips_a_table_that_no_longer_exists_in_legacy(): void
     {
-        DB::connection('legacy')->getSchemaBuilder()->drop('monthly_exercise_weights');
+        DB::connection('legacy')->getSchemaBuilder()->drop('gym_logs');
 
         $this->artisan('app:import-legacy --dry-run')
-            ->expectsOutputToContain('`monthly_exercise_weights` does not exist; skipping')
+            ->expectsOutputToContain('`gym_logs` does not exist; skipping')
             ->assertSuccessful();
 
         $this->artisan('app:import-legacy')
-            ->expectsOutputToContain('`monthly_exercise_weights` does not exist; skipping')
+            ->expectsOutputToContain('`gym_logs` does not exist; skipping')
             ->assertSuccessful();
 
-        $this->assertSame(1, DB::table('gym_logs')->count());
-        $this->assertSame(0, DB::table('monthly_exercise_weights')->count());
+        $this->assertSame('Squat', DB::table('exercises')->value('name'));
+        $this->assertSame(0, DB::table('gym_logs')->count());
     }
 
     public function test_it_refuses_to_import_into_a_non_empty_database(): void

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
@@ -17,9 +18,13 @@ class ExampleTest extends TestCase
         $this->getJson('/api/exercises')->assertUnauthorized();
     }
 
-    public function test_login_page_loads(): void
+    public function test_login_page_loads_without_sending_a_notification_mail(): void
     {
+        Mail::fake();
+
         $this->get('/inchecken')->assertOk()->assertSee('data-page="Login"', false);
+
+        Mail::assertNothingSent();
     }
 
     public function test_gym_pages_load_for_logged_in_user(): void

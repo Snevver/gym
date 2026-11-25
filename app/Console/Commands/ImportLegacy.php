@@ -28,11 +28,9 @@ class ImportLegacy extends Command
     {
         return [
             'users' => null,
-            'settings' => fn ($q) => $q->where('key', 'inchecken_ip_whitelist'),
             'exercises' => null,
             'training_schemes' => null,
             'exercise_training_scheme' => null,
-            'monthly_exercise_weights' => null,
             'gym_logs' => null,
         ];
     }
