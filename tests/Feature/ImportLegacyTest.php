@@ -44,6 +44,22 @@ class ImportLegacyTest extends TestCase
         $this->assertSame($before, DB::connection('legacy')->table('exercises')->count());
     }
 
+    public function test_it_skips_a_table_that_no_longer_exists_in_legacy(): void
+    {
+        DB::connection('legacy')->getSchemaBuilder()->drop('monthly_exercise_weights');
+
+        $this->artisan('app:import-legacy --dry-run')
+            ->expectsOutputToContain('`monthly_exercise_weights` does not exist; skipping')
+            ->assertSuccessful();
+
+        $this->artisan('app:import-legacy')
+            ->expectsOutputToContain('`monthly_exercise_weights` does not exist; skipping')
+            ->assertSuccessful();
+
+        $this->assertSame(1, DB::table('gym_logs')->count());
+        $this->assertSame(0, DB::table('monthly_exercise_weights')->count());
+    }
+
     public function test_it_refuses_to_import_into_a_non_empty_database(): void
     {
         DB::table('users')->insert(['name' => 'x', 'email' => 'x@y.z', 'password' => 'x']);
